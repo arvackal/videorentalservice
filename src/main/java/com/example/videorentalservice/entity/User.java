@@ -1,12 +1,19 @@
 package com.example.videorentalservice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.Builder;
 import lombok.Data;
 
 @Entity
 @Data
 @Builder
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "email")
+        }
+)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +25,8 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false)
+    @Email
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
