@@ -1,11 +1,11 @@
 package com.example.videorentalservice.service;
 
-import com.example.videorentalservice.dto.CreateUserRequest;
+import com.example.videorentalservice.dto.AdminCreateUserRequest;
+import com.example.videorentalservice.dto.RegisterUserRequest;
 import com.example.videorentalservice.dto.UpdateUserRequest;
 import com.example.videorentalservice.dto.UserDetailsResponse;
 import com.example.videorentalservice.entity.Role;
 import com.example.videorentalservice.entity.User;
-import com.example.videorentalservice.exception.AdminNotFoundException;
 import com.example.videorentalservice.exception.UnknownRoleException;
 import com.example.videorentalservice.exception.UserExistsException;
 import com.example.videorentalservice.exception.UserNotFoundException;
@@ -49,9 +49,7 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    private Role parseRole(CreateUserRequest request){
-        String roleAsString = request.getRole();
-
+    private Role parseRole(String roleAsString){
         if(roleAsString.trim().isEmpty())
             return Role.CUSTOMER;
 
@@ -63,43 +61,57 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private User.UserBuilder userCreator(CreateUserRequest request){
+    private User userCreator(String firstName, String lastName,
+                             String email, String password,
+                             Role role, User currentUser
+    ){
 
-        if(existByEmail(request.getEmail()))
-            throw new UserExistsException(request.getEmail());
+        if(existByEmail(email))
+            throw new UserExistsException(email);
+
+        if(role ==Role.ADMIN && currentUser == null)
+            throw new AccessDeniedException("Admin creation requires admin permission.");
 
         return User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()));
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .password(passwordEncoder.encode(password))
+                .role(role)
+                .build();
     }
 
     @Override
-    public UserDetailsResponse createUser(String currentUserEmail, CreateUserRequest request) {
-        Role role = parseRole(request);
+    public UserDetailsResponse registerUser(RegisterUserRequest request) {
+            User user = userCreator(request.getFirstName(),
+                    request.getLastName(),
+                    request.getEmail(),
+                    request.getPassword(),
+                    Role.CUSTOMER,
+                    null);
 
-        if(role == Role.CUSTOMER){
-            User user = userCreator(request).role(Role.CUSTOMER).build();
-
+            userRepository.save(user);
             return new UserDetailsResponse(user);
-        }
-        else{
-            User currentUser = getByEmail(currentUserEmail);
+    }
 
-            if(currentUser.getRole() != Role.ADMIN)
-                throw new AccessDeniedException("Only admins can create admins.");
+    @Override
+    public UserDetailsResponse createUserByAdmin(String currentUserEmail, AdminCreateUserRequest request) {
+        User currentUser = getByEmail(currentUserEmail);
 
-            User user = User.builder()
-                    .firstName(request.getFirstName())
-                    .lastName(request.getLastName())
-                    .email(request.getEmail())
-                    .password(passwordEncoder.encode(request.getPassword()))
-                    .role(Role.ADMIN)
-                    .build();
+        if(currentUser.getRole() != Role.ADMIN)
+            throw new AccessDeniedException("Only admins can create admins.");
 
-            return new UserDetailsResponse(user);
-        }
+        Role newUserRole = parseRole(request.getRole());
+        User user = userCreator(request.getFirstName(),
+                        request.getLastName(),
+                        request.getEmail(),
+                        request.getPassword(),
+                        newUserRole,
+                        currentUser);
+        userRepository.save(user);
+
+        return new UserDetailsResponse(user);
+
     }
 
 
@@ -116,13 +128,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUserById(Long id, Long currentUserId) {
-        User user = getById(id);
-        User currentUser = getById(currentUserId);
+    public void deleteUserById(String email, String currentUserEmail) {
+        User currentUser = getByEmail(currentUserEmail);
 
-        if(!Objects.equals(id, currentUserId) && currentUser.getRole() != Role.ADMIN){
+        if(!currentUser.getEmail().equals(email) && currentUser.getRole() != Role.ADMIN){
             throw new AccessDeniedException("Access denied.");
         }
+
+        User user = getByEmail(email);
 
         userRepository.delete(user);
     }

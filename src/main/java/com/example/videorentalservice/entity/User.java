@@ -2,12 +2,15 @@ package com.example.videorentalservice.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @Builder
+@AllArgsConstructor
 @Table(
         name = "users",
         uniqueConstraints = {
@@ -34,6 +37,10 @@ public class User {
 
     @Column(nullable = false)
     private Role role;
+
+    public User(){
+
+    }
 
     public User(String firstName, String lastName, String email, String password, Role role) {
         this.firstName = firstName;

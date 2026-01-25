@@ -1,6 +1,5 @@
 package com.example.videorentalservice.controller;
 
-import com.example.videorentalservice.dto.CreateUserRequest;
 import com.example.videorentalservice.dto.UpdateUserRequest;
 import com.example.videorentalservice.dto.UserDetailsResponse;
 import com.example.videorentalservice.entity.User;
@@ -21,10 +20,10 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDetailsResponse> getMyProfile(Authentication  authentication){
-
         String email = authentication.getName();
+        System.out.println("Reqeust caught email: " + email);
         User user = userService.getByEmail(email);
         UserDetailsResponse response = new UserDetailsResponse(user);
 

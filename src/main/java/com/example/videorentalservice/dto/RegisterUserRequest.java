@@ -1,10 +1,12 @@
 package com.example.videorentalservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class CreateUserRequest {
+@JsonIgnoreProperties(ignoreUnknown = false)
+public class RegisterUserRequest {
     @NotBlank(message = "First name is required.")
     private String firstName;
 
@@ -17,5 +19,4 @@ public class CreateUserRequest {
     @NotBlank(message = "Password is required.")
     private String password;
 
-    private String role;
 }

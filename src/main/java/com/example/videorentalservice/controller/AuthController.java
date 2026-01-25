@@ -1,9 +1,10 @@
 package com.example.videorentalservice.controller;
 
-import com.example.videorentalservice.dto.CreateUserRequest;
+import com.example.videorentalservice.dto.AdminCreateUserRequest;
+import com.example.videorentalservice.dto.RegisterUserRequest;
 import com.example.videorentalservice.dto.UserDetailsResponse;
-import com.example.videorentalservice.entity.User;
 import com.example.videorentalservice.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserDetailsResponse> register(
-            @RequestBody CreateUserRequest request){
-
-        UserDetailsResponse response = userService.createUser(null, request);
+            @Valid @RequestBody  RegisterUserRequest request){
+        UserDetailsResponse response = userService.registerUser(request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
@@ -34,12 +34,12 @@ public class AuthController {
     @PostMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDetailsResponse> createUserByAdmin(
-            @RequestBody CreateUserRequest request,
+            @Valid @RequestBody AdminCreateUserRequest request,
             Authentication authentication
     ){
         String currentUserEmail = authentication.getName();
 
-        UserDetailsResponse response = userService.createUser(currentUserEmail, request);
+        UserDetailsResponse response = userService.createUserByAdmin(currentUserEmail, request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);

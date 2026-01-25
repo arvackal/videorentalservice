@@ -7,5 +7,6 @@ public enum Genre {
     DRAMA,
     SCIFI,
     GORE,
-    INVESTIGATION
+    INVESTIGATION,
+    ACTION
 }
